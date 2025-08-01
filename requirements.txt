@@ -1,0 +1,21 @@
+#FastAPI Web Framework
+fastapi==0.115.0
+uvicorn==0.30.1
+
+#LangChain Core & Community (modular split)
+langchain-core==0.1.52
+langchain-community==0.0.36
+
+#LLM Support
+openai
+
+#Vector Database & Embeddings
+pinecone-client==5.0.1
+sentence-transformers==3.1.1
+
+#PDF Parsing & Data Handling
+pypdf2==3.0.1
+pandas==2.0.3
+
+#Environment Variable Handling
+python-dotenv==1.0.1
