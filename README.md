@@ -1,7 +1,5 @@
 # AI_Offer_Letter_Agent
 
-# Offer_Letter_AI_Agent
-
 This project is an automated offer letter generation system that harnesses AI and predefined templates to create professional offer letters based on employee data. It includes a FastAPI backend, a React frontend, and ntegrates with OpenRouter.ai for AI-driven content generation with a fallback to template-based generation.
 
 ## Project Overview
