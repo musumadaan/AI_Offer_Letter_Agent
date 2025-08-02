@@ -1,0 +1,13 @@
+[build]
+builder = "nixpacks"
+
+[[services]]
+buildCommand = "cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt"
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+deployCommand = "echo Deployed!"
+env = ["PORT=8080"]
+[services.env]
+OPENROUTER_API_KEY = { widget = "text" }
+PINECONE_API_KEY = { widget = "text" }
+CLOUD_PROVIDER = { widget = "text", default = "aws" }
+REGION = { widget = "text", default = "us-east-1" }
