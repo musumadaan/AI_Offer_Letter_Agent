@@ -3,17 +3,18 @@ from fastapi.responses import JSONResponse
 from backend.offer_letter_agent import generate_offer_for, check_system_status, list_employees
 import traceback
 import logging
-from dotenv import load_dotenv
 import os
 
-# Load environment variables with explicit path and force reload
-env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+# Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s", handlers=[logging.StreamHandler()])
-logger.info(f"Attempting to load .env file from: {env_path}")
-load_dotenv(dotenv_path=env_path, override=True)
+logger.info("Initializing Offer Letter Generator API")
+
+# Load environment variables directly (no .env file on Railway)
 openrouter_key = os.getenv("OPENROUTER_API_KEY")
+pinecone_key = os.getenv("PINECONE_API_KEY")
 logger.debug(f"Loaded OPENROUTER_API_KEY: {openrouter_key[:4] if openrouter_key else 'None'}...[REDACTED]")
+logger.debug(f"Loaded PINECONE_API_KEY: {pinecone_key[:4] if pinecone_key else 'None'}...[REDACTED]")
 
 app = FastAPI(
     title="Offer Letter Generator API",
@@ -21,9 +22,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Mount the React build folder
+app.mount("/static", StaticFiles(directory="frontend/build"), name="static")
+
+# Root endpoint with API information
 @app.get("/")
 def root():
-    """Root endpoint with API information"""
     logger.info("Root endpoint accessed")
     return {
         "message": "Offer Letter Generator API",
@@ -36,15 +40,15 @@ def root():
         }
     }
 
+# Basic health check
 @app.get("/health/")
 def health_check():
-    """Basic health check"""
     logger.info("Health check performed")
     return {"status": "healthy", "message": "API is running"}
 
+# Check system status
 @app.get("/check-system-status/")
 def check_system_status_endpoint():
-    """Check system status, including vector store and LLM availability"""
     logger.info("Checking system status")
     try:
         status = check_system_status()
@@ -57,9 +61,9 @@ def check_system_status_endpoint():
             content={"system_status": "error", "message": f"Status check failed: {str(e)}"}
         )
 
+# List all employees
 @app.get("/list-employees/")
 def get_employees():
-    """List all employees from the CSV"""
     logger.info("Listing employees")
     try:
         employees = list_employees()
@@ -69,9 +73,9 @@ def get_employees():
         logger.error(f"Failed to list employees: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to list employees: {str(e)}")
 
+# Generate offer letter
 @app.get("/generate-offer/")
 def generate_offer(name: str = Query(..., description="Employee name to generate offer letter for")):
-    """Generate offer letter for specified employee"""
     try:
         logger.info(f"Generating offer letter for employee: {name}")
         response = generate_offer_for(name)
@@ -84,18 +88,16 @@ def generate_offer(name: str = Query(..., description="Employee name to generate
         return response
         
     except HTTPException as he:
-        raise he  # Re-raise HTTP exceptions as-is
-        
+        raise he
     except Exception as e:
         traceback_str = traceback.format_exc()
         logger.error(f"Error generating offer for {name}: {str(e)}")
-        print(traceback_str)  # Keep console output for debugging
+        print(traceback_str)
         
-        # Check if it's an OpenRouter.ai quota error
         error_str = str(e).lower()
         if "quota" in error_str or "429" in error_str or "insufficient_quota" in error_str:
             return JSONResponse(
-                status_code=503, 
+                status_code=503,
                 content={
                     "error": "Service temporarily unavailable",
                     "message": "OpenRouter.ai quota exceeded. Template generation should be available.",
@@ -104,7 +106,7 @@ def generate_offer(name: str = Query(..., description="Employee name to generate
             )
         else:
             return JSONResponse(
-                status_code=500, 
+                status_code=500,
                 content={
                     "error": f"Internal Server Error: {str(e)}",
                     "message": "An unexpected error occurred during offer generation"
@@ -128,16 +130,12 @@ async def internal_error_handler(request, exc):
         content={"error": "Internal Server Error", "message": "An unexpected error occurred"}
     )
 
+# CORS middleware
 from fastapi.middleware.cors import CORSMiddleware
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],  # Added "*" for deployed app
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
