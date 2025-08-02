@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Query, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from backend.offer_letter_agent import generate_offer_for, check_system_status, list_employees
 import traceback
 import logging
 import os
+from pathlib import Path
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -22,32 +24,34 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Mount the React build folder
-app.mount("/static", StaticFiles(directory="frontend/build"), name="static")
+# Check if build directory exists
+build_path = Path("frontend/build")
+if not build_path.exists():
+    logger.warning(f"Build directory {build_path} does not exist. Make sure to run 'npm run build' in the frontend directory.")
 
-# Root endpoint with API information
-@app.get("/")
+# API Routes (define these BEFORE mounting static files)
+@app.get("/api/")
 def root():
-    logger.info("Root endpoint accessed")
+    logger.info("API root endpoint accessed")
     return {
         "message": "Offer Letter Generator API",
         "status": "running",
         "endpoints": {
-            "generate_offer": "/generate-offer/?name={employee_name}",
-            "check_system_status": "/check-system-status/",
-            "health_check": "/health/",
-            "list_employees": "/list-employees/"
+            "generate_offer": "/api/generate-offer/?name={employee_name}",
+            "check_system_status": "/api/check-system-status/",
+            "health_check": "/api/health/",
+            "list_employees": "/api/list-employees/"
         }
     }
 
 # Basic health check
-@app.get("/health/")
+@app.get("/api/health/")
 def health_check():
     logger.info("Health check performed")
     return {"status": "healthy", "message": "API is running"}
 
 # Check system status
-@app.get("/check-system-status/")
+@app.get("/api/check-system-status/")
 def check_system_status_endpoint():
     logger.info("Checking system status")
     try:
@@ -62,7 +66,7 @@ def check_system_status_endpoint():
         )
 
 # List all employees
-@app.get("/list-employees/")
+@app.get("/api/list-employees/")
 def get_employees():
     logger.info("Listing employees")
     try:
@@ -74,7 +78,7 @@ def get_employees():
         raise HTTPException(status_code=500, detail=f"Failed to list employees: {str(e)}")
 
 # Generate offer letter
-@app.get("/generate-offer/")
+@app.get("/api/generate-offer/")
 def generate_offer(name: str = Query(..., description="Employee name to generate offer letter for")):
     try:
         logger.info(f"Generating offer letter for employee: {name}")
@@ -113,6 +117,50 @@ def generate_offer(name: str = Query(..., description="Employee name to generate
                 }
             )
 
+# Static file serving (mount static directories)
+if build_path.exists():
+    # Mount the assets directory for CSS, JS, and other bundled assets
+    assets_path = build_path / "assets"
+    if assets_path.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
+        logger.info(f"Mounted /assets directory from {assets_path}")
+    
+    # Serve individual static files that might be in the root
+    static_files = ["favicon.ico", "vite.svg", "robots.txt", "manifest.json"]
+    for filename in static_files:
+        file_path = build_path / filename
+        if file_path.exists():
+            @app.get(f"/{filename}")
+            async def serve_static_file(filename=filename):
+                return FileResponse(str(build_path / filename))
+    
+    # Root route - serve index.html
+    @app.get("/")
+    async def serve_index():
+        logger.info("Serving index.html for root route")
+        return FileResponse(str(build_path / "index.html"))
+    
+    # Catch-all route for React Router (must be last)
+    @app.get("/{full_path:path}")
+    async def serve_react_app(full_path: str):
+        # Skip if it's an API route or static asset
+        if (full_path.startswith("api/") or 
+            full_path.startswith("assets/") or
+            full_path.endswith(('.js', '.css', '.ico', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.woff', '.woff2', '.ttf', '.eot'))):
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        # Serve index.html for all other routes (React Router will handle them)
+        logger.info(f"Serving React app for path: /{full_path}")
+        return FileResponse(str(build_path / "index.html"))
+else:
+    @app.get("/")
+    async def no_frontend():
+        return {
+            "message": "Frontend not built. Run 'npm run build' in the frontend directory.",
+            "build_path": str(build_path),
+            "exists": build_path.exists()
+        }
+
 # Global exception handlers
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
@@ -134,7 +182,7 @@ async def internal_error_handler(request, exc):
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],  # Added "*" for deployed app
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

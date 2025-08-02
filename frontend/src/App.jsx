@@ -16,13 +16,14 @@ function App() {
     setError('');
     setOfferLetter('');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/generate-offer/?name=${encodeURIComponent(name)}`);
-      if (!response.ok) throw new Error('Failed to fetch offer letter');
+      const response = await fetch(`/api/generate-offer/?name=${encodeURIComponent(name)}`);
+      if (!response.ok) throw new Error(`Failed to fetch offer letter: ${response.status}`);
       const data = await response.json();
       setOfferLetter(data.offer_letter || 'No offer letter generated.');
       setShowOfferLetter(true);
     } catch (err) {
       setError(err.message);
+      console.error("Fetch error:", err); // Debug
     } finally {
       setLoading(false);
     }

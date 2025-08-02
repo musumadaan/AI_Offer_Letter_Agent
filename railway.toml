@@ -1,13 +1,18 @@
 [build]
 builder = "nixpacks"
+buildCommand = "cd frontend && npm ci && npm run build && cd .. && pip install -r requirements.txt"
 
-[[services]]
-buildCommand = "cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt"
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+[deploy]
+startCommand = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
 deployCommand = "echo Deployed!"
-env = ["PORT=8080"]
-[services.env]
+restartPolicyType = "on_failure"
+
+[env]
+PORT = { default = "8000" }
+PYTHONPATH = "."
+PYTHON_VERSION = "3.8"
 OPENROUTER_API_KEY = { widget = "text" }
 PINECONE_API_KEY = { widget = "text" }
-CLOUD_PROVIDER = { widget = "text", default = "aws" }
-REGION = { widget = "text", default = "us-east-1" }
+PINECONE_INDEX_NAME = { widget = "text", default = "offer-letter-index" }
+PINECONE_CLOUD = { widget = "text", default = "aws" }
+PINECONE_REGION = { widget = "text", default = "us-west-2" }
