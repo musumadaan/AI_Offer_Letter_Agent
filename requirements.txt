@@ -8,6 +8,7 @@ langchain-community==0.2.19
 
 # LLM Support
 openai==1.98.0
+langchain-openai==0.1.25
 
 # Vector Database & Embeddings
 pinecone-client==5.0.1
