@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs-20", "python38"]
+nixPkgs = ["nodejs_20", "python38"]
 
 [phases.install]
 cmds = [
