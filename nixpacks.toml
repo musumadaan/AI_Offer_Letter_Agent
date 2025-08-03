@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "python3", "gcc", "gfortran", "libffi", "libxml2"]
+nixPkgs = ["nodejs_20", "python3", "gcc", "libffi", "libxml2"]
 
 [phases.install]
 cmds = [
