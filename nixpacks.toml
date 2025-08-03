@@ -1,5 +1,6 @@
-[phases.setup]
-nixPkgs = ["nodejs-20_x", "python38", "python38Packages.pip"]
+[providers]
+node = "20"
+python = "3.8"
 
 [phases.build]
 cmds = [
