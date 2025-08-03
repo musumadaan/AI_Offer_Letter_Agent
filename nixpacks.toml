@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs-20_x", "python38"]
+env = { PORT = "8000" }
 
 [phases.build]
 cmds = ["cd frontend && npm ci && npm run build && cd .. && pip install -r requirements.txt && mkdir -p backend/data"]
