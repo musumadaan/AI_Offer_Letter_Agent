@@ -6,5 +6,3 @@ PYTHON_VERSION = "3.8"
 OPENROUTER_API_KEY = { widget = "text" }
 PINECONE_API_KEY = { widget = "text" }
 PINECONE_INDEX_NAME = { widget = "text", default = "offer-letter-index" }
-PINECONE_CLOUD = { widget = "text", default = "aws" }
-PINECONE_REGION = { widget = "text", default = "us-west-2" }
