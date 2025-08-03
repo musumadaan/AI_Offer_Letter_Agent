@@ -3,3 +3,6 @@ nixPkgs = ["nodejs-20_x", "python38"]
 
 [phases.build]
 cmds = ["cd frontend && npm ci && npm run build && cd .. && pip install -r requirements.txt && mkdir -p backend/data"]
+
+[phases.start]
+cmd = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
