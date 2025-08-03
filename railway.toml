@@ -1,9 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && mkdir -p backend/data"
-
-[start]
-cmd = "ls -R && uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
 
 [env]
 PORT = { default = "8000" }
