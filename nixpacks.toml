@@ -1,9 +1,9 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "python3"]
+nixPkgs = ["nodejs_20", "python3", "gcc", "gfortran", "libffi", "libxml2"]
 
 [phases.install]
 cmds = [
-  "python -m venv /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"
+  "python -m venv /opt/venv && . /opt/venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
 ]
 
 [phases.build]
