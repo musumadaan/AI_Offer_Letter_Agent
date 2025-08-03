@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs-20", "python38"]
+env = { PORT = "8000" }
 
 [phases.build]
 cmds = [
