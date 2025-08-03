@@ -6,6 +6,7 @@ buildCommand = "cd frontend && npm install && npm run build && cd .. && pip inst
 cmd = "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
 
 [env]
+PORT = { default = "8000" }
 PYTHONPATH = "."
 PYTHON_VERSION = "3.8"  
 OPENROUTER_API_KEY = { widget = "text" }
